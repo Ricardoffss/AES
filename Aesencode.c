@@ -10,18 +10,18 @@
 
 typedef struct _AES {
 
-	PBYTE	pPlainText;         // Ã÷ÎÄÊı¾İµÄ»ùµØÖ·
-	DWORD	dwPlainSize;        // Ã÷ÎÄÊı¾İµÄ´óĞ¡
+	PBYTE	pPlainText;         // æ˜æ–‡æ•°æ®çš„åŸºåœ°å€
+	DWORD	dwPlainSize;        // æ˜æ–‡æ•°æ®çš„å¤§å°
 
-	PBYTE	pCipherText;        // ÃÜÎÄÊı¾İµÄ»ùµØÖ·
-	DWORD	dwCipherSize;       // ÃÜÎÄÊı¾İµÄ´óĞ¡£¨Èç¹ûÌî³äÁËÊı¾İ£¬Õâ¸öÖµ¿ÉÄÜ²»Í¬ÓÚ dwPlainSize£©
+	PBYTE	pCipherText;        // å¯†æ–‡æ•°æ®çš„åŸºåœ°å€
+	DWORD	dwCipherSize;       // å¯†æ–‡æ•°æ®çš„å¤§å°ï¼ˆå¦‚æœå¡«å……äº†æ•°æ®ï¼Œè¿™ä¸ªå€¼å¯èƒ½ä¸åŒäº dwPlainSizeï¼‰
 
-	PBYTE	pKey;               // 32 ×Ö½ÚÃÜÔ¿
-	PBYTE	pIv;                // 16 ×Ö½Ú IV£¨³õÊ¼»¯ÏòÁ¿£©
+	PBYTE	pKey;               // 32 å­—èŠ‚å¯†é’¥
+	PBYTE	pIv;                // 16 å­—èŠ‚ IVï¼ˆåˆå§‹åŒ–å‘é‡ï¼‰
 
 } AES, *PAES;
 
-// ¼ÓÃÜÊµÏÖ
+// åŠ å¯†å®ç°
 BOOL InstallAesEncryption(PAES pAes) {
     BOOL bSTATE = TRUE;
     BCRYPT_ALG_HANDLE hAlgorithm = NULL;
@@ -38,79 +38,79 @@ BOOL InstallAesEncryption(PAES pAes) {
 
     NTSTATUS STATUS = 0;
 
-    // ³õÊ¼»¯¡°hAlgorithm¡±Îª AES Ëã·¨¾ä±ú
+    // åˆå§‹åŒ–â€œhAlgorithmâ€ä¸º AES ç®—æ³•å¥æŸ„
     STATUS = BCryptOpenAlgorithmProvider(&hAlgorithm, BCRYPT_AES_ALGORITHM, NULL, 0);
     if (!NT_SUCCESS(STATUS)) {
-        printf("[!] BCryptOpenAlgorithmProvider ³ö´í: 0x%0.8X \n", STATUS);
+        printf("[!] BCryptOpenAlgorithmProvider å‡ºé”™: 0x%0.8X \n", STATUS);
         bSTATE = FALSE; goto _EndOfFunc;
     }
 
-    // »ñÈ¡ÃÜÔ¿¶ÔÏó±äÁ¿ pbKeyObject µÄ´óĞ¡¡£¸ÃÊôĞÔ½«±»ºóÃæµÄ BCryptGenerateSymmetricKey º¯ÊıÊ¹ÓÃ
+    // è·å–å¯†é’¥å¯¹è±¡å˜é‡ pbKeyObject çš„å¤§å°ã€‚è¯¥å±æ€§å°†è¢«åé¢çš„ BCryptGenerateSymmetricKey å‡½æ•°ä½¿ç”¨
     STATUS = BCryptGetProperty(hAlgorithm, BCRYPT_OBJECT_LENGTH, (PBYTE)&cbKeyObject, sizeof(cbKeyObject), &cbResult, 0);
     if (!NT_SUCCESS(STATUS)) {
-        printf("[!] BCryptGetProperty[1] ³ö´í: 0x%0.8X \n", STATUS);
+        printf("[!] BCryptGetProperty[1] å‡ºé”™: 0x%0.8X \n", STATUS);
         bSTATE = FALSE; goto _EndOfFunc;
     }
 
-    // ¼ì²é cbKeyObject ÊÇ·ñÓĞĞ§
+    // æ£€æŸ¥ cbKeyObject æ˜¯å¦æœ‰æ•ˆ
     if (cbKeyObject == 0) {
         printf("[!] Invalid cbKeyObject value.\n");
         bSTATE = FALSE; goto _EndOfFunc;
     }
 
-    // ÎªÃÜÔ¿¶ÔÏó·ÖÅäÄÚ´æ
+    // ä¸ºå¯†é’¥å¯¹è±¡åˆ†é…å†…å­˜
     pbKeyObject = (PBYTE)HeapAlloc(GetProcessHeap(), 0, cbKeyObject);
     if (pbKeyObject == NULL) {
         bSTATE = FALSE; goto _EndOfFunc;
     }
 
-    // »ñÈ¡¼ÓÃÜÖĞÊ¹ÓÃµÄ¿é´óĞ¡¡£ÓÉÓÚÕâÊÇ AES£¬Òò´ËËü±ØĞëÎª 16 ¸ö×Ö½Ú¡£
+    // è·å–åŠ å¯†ä¸­ä½¿ç”¨çš„å—å¤§å°ã€‚ç”±äºè¿™æ˜¯ AESï¼Œå› æ­¤å®ƒå¿…é¡»ä¸º 16 ä¸ªå­—èŠ‚ã€‚
     STATUS = BCryptGetProperty(hAlgorithm, BCRYPT_BLOCK_LENGTH, (PBYTE)&dwBlockSize, sizeof(dwBlockSize), &cbResult, 0);
     if (!NT_SUCCESS(STATUS)) {
-        printf("[!] BCryptGetProperty[2] ³ö´í: 0x%0.8X \n", STATUS);
+        printf("[!] BCryptGetProperty[2] å‡ºé”™: 0x%0.8X \n", STATUS);
         bSTATE = FALSE; goto _EndOfFunc;
     }
 
-    // ¼ì²é¿é´óĞ¡ÊÇ·ñÎª 16 ¸ö×Ö½Ú
+    // æ£€æŸ¥å—å¤§å°æ˜¯å¦ä¸º 16 ä¸ªå­—èŠ‚
     if (dwBlockSize != 16) {
         bSTATE = FALSE; goto _EndOfFunc;
     }
 
-    // ÉèÖÃ¿éÃÜÂëÄ£Ê½Îª CBC¡£ÕâÊ¹ÓÃÁË 32 ×Ö½ÚµÄÃÜÔ¿ºÍ 16 ×Ö½ÚµÄ IV¡£
+    // è®¾ç½®å—å¯†ç æ¨¡å¼ä¸º CBCã€‚è¿™ä½¿ç”¨äº† 32 å­—èŠ‚çš„å¯†é’¥å’Œ 16 å­—èŠ‚çš„ IVã€‚
     STATUS = BCryptSetProperty(hAlgorithm, BCRYPT_CHAINING_MODE, (PBYTE)BCRYPT_CHAIN_MODE_CBC, sizeof(BCRYPT_CHAIN_MODE_CBC), 0);
     if (!NT_SUCCESS(STATUS)) {
-        printf("[!] BCryptSetProperty ³ö´í: 0x%0.8X \n", STATUS);
+        printf("[!] BCryptSetProperty å‡ºé”™: 0x%0.8X \n", STATUS);
         bSTATE = FALSE; goto _EndOfFunc;
     }
 
-    // ´Ó AES ÃÜÔ¿¡°pAes->pKey¡±Éú³ÉÃÜÔ¿¶ÔÏó¡£Êä³ö½«±£´æÔÚ pbKeyObject ÖĞ£¬´óĞ¡Îª cbKeyObject
+    // ä» AES å¯†é’¥â€œpAes->pKeyâ€ç”Ÿæˆå¯†é’¥å¯¹è±¡ã€‚è¾“å‡ºå°†ä¿å­˜åœ¨ pbKeyObject ä¸­ï¼Œå¤§å°ä¸º cbKeyObject
     STATUS = BCryptGenerateSymmetricKey(hAlgorithm, &hKeyHandle, pbKeyObject, cbKeyObject, (PBYTE)pAes->pKey, KEYSIZE, 0);
     if (!NT_SUCCESS(STATUS)) {
-        printf("[!] BCryptGenerateSymmetricKey ³ö´í: 0x%0.8X \n", STATUS);
+        printf("[!] BCryptGenerateSymmetricKey å‡ºé”™: 0x%0.8X \n", STATUS);
         bSTATE = FALSE; goto _EndOfFunc;
     }
 
-    // µÚÒ»´ÎÔËĞĞ BCryptEncrypt£¬ÆäÊä³ö²ÎÊıÎª NULL£¬ÓÃÓÚ¼ìË÷Êä³ö»º³åÇøµÄ´óĞ¡£¬¸Ã´óĞ¡±£´æÔÚ cbCipherText ÖĞ
+    // ç¬¬ä¸€æ¬¡è¿è¡Œ BCryptEncryptï¼Œå…¶è¾“å‡ºå‚æ•°ä¸º NULLï¼Œç”¨äºæ£€ç´¢è¾“å‡ºç¼“å†²åŒºçš„å¤§å°ï¼Œè¯¥å¤§å°ä¿å­˜åœ¨ cbCipherText ä¸­
     STATUS = BCryptEncrypt(hKeyHandle, (PUCHAR)pAes->pPlainText, (ULONG)pAes->dwPlainSize, NULL, pAes->pIv, IVSIZE, NULL, 0, &cbCipherText, BCRYPT_BLOCK_PADDING);
     if (!NT_SUCCESS(STATUS)) {
-        printf("[!] BCryptEncrypt[1] ³ö´í: 0x%0.8X \n", STATUS);
+        printf("[!] BCryptEncrypt[1] å‡ºé”™: 0x%0.8X \n", STATUS);
         bSTATE = FALSE; goto _EndOfFunc;
     }
 
-    // ÖØĞÂÎªÊä³ö»º³åÇø·ÖÅä×ã¹»µÄÄÚ´æ£¨cbCipherText£©
+    // é‡æ–°ä¸ºè¾“å‡ºç¼“å†²åŒºåˆ†é…è¶³å¤Ÿçš„å†…å­˜ï¼ˆcbCipherTextï¼‰
     pbCipherText = (PBYTE)HeapAlloc(GetProcessHeap(), 0, cbCipherText);
     if (pbCipherText == NULL) {
         bSTATE = FALSE; goto _EndOfFunc;
     }
 
-    // ÔÙ´ÎÔËĞĞ BCryptEncrypt£¬pbCipherText ×÷ÎªÊä³ö»º³åÇø
+    // å†æ¬¡è¿è¡Œ BCryptEncryptï¼ŒpbCipherText ä½œä¸ºè¾“å‡ºç¼“å†²åŒº
     STATUS = BCryptEncrypt(hKeyHandle, (PUCHAR)pAes->pPlainText, (ULONG)pAes->dwPlainSize, NULL, pAes->pIv, IVSIZE, pbCipherText, cbCipherText, &cbResult, BCRYPT_BLOCK_PADDING);
     if (!NT_SUCCESS(STATUS)) {
-        printf("[!] BCryptEncrypt[2] ³ö´í: 0x%0.8X \n", STATUS);
+        printf("[!] BCryptEncrypt[2] å‡ºé”™: 0x%0.8X \n", STATUS);
         bSTATE = FALSE; goto _EndOfFunc;
     }
 
-    // ÇåÀí
+    // æ¸…ç†
 _EndOfFunc:
     if (hKeyHandle) BCryptDestroyKey(hKeyHandle);
     if (hAlgorithm) BCryptCloseAlgorithmProvider(hAlgorithm, 0);
@@ -124,13 +124,13 @@ _EndOfFunc:
 
 
 
-// ·â×° InstallAesEncryption µÄº¯Êı£¬¼ò»¯²Ù×÷
+// å°è£… InstallAesEncryption çš„å‡½æ•°ï¼Œç®€åŒ–æ“ä½œ
 BOOL SimpleEncryption(IN PVOID pPlainTextData, IN DWORD sPlainTextSize, IN PBYTE pKey, IN PBYTE pIv, OUT PVOID* pCipherTextData, OUT DWORD* sCipherTextSize) {
 
     if (pPlainTextData == NULL || sPlainTextSize == NULL || pKey == NULL || pIv == NULL)
         return FALSE;
 
-    // ³õÊ¼»¯½á¹¹
+    // åˆå§‹åŒ–ç»“æ„
     AES Aes = {
         .pKey = pKey,
         .pIv = pIv,
@@ -142,7 +142,7 @@ BOOL SimpleEncryption(IN PVOID pPlainTextData, IN DWORD sPlainTextSize, IN PBYTE
         return FALSE;
     }
 
-    // ±£´æÊä³ö
+    // ä¿å­˜è¾“å‡º
     *pCipherTextData = Aes.pCipherText;
     *sCipherTextSize = Aes.dwCipherSize;
 
@@ -157,7 +157,7 @@ void PrintHexData(LPCSTR Name, PBYTE Data, SIZE_T Size) {
     printf("\n");
 }
 
-// Éú³É´óĞ¡Îª sSize µÄËæ»ú×Ö½Ú
+// ç”Ÿæˆå¤§å°ä¸º sSize çš„éšæœºå­—èŠ‚
 VOID GenerateRandomBytes(PBYTE pByte, SIZE_T sSize) {
 
     int i = 0;
@@ -167,39 +167,39 @@ VOID GenerateRandomBytes(PBYTE pByte, SIZE_T sSize) {
 
 }
 
-// ´¿ÎÄ±¾£¬ÒÔÊ®Áù½øÖÆ¸ñÊ½£¬½«±»¼ÓÃÜ
-// ÕâÊÇÊ®Áù½øÖÆÖĞµÄÒÔÏÂ×Ö·û´®¡°This is a plain text string, we'll try to encrypt/decrypt !¡±
+// çº¯æ–‡æœ¬ï¼Œä»¥åå…­è¿›åˆ¶æ ¼å¼ï¼Œå°†è¢«åŠ å¯†
+// è¿™æ˜¯åå…­è¿›åˆ¶ä¸­çš„ä»¥ä¸‹å­—ç¬¦ä¸²â€œThis is a plain text string, we'll try to encrypt/decrypt !â€
 using char Data [];
 
 int main() {
 
-    BYTE pKey [KEYSIZE];                    // KEYSIZE Îª 32 ×Ö½Ú
-    BYTE pIv [IVSIZE];                      // IVSIZE Îª 16 ×Ö½Ú
+    BYTE pKey [KEYSIZE];                    // KEYSIZE ä¸º 32 å­—èŠ‚
+    BYTE pIv [IVSIZE];                      // IVSIZE ä¸º 16 å­—èŠ‚
 
-    srand(time(NULL));                      // Éú³ÉÃÜÔ¿µÄÖÖ×Ó¡£ÕâÓÃÓÚ½øÒ»²½Ëæ»ú»¯ÃÜÔ¿¡£
-    GenerateRandomBytes(pKey, KEYSIZE);     // Ê¹ÓÃ¸¨Öúº¯ÊıÉú³ÉÃÜÔ¿
+    srand(time(NULL));                      // ç”Ÿæˆå¯†é’¥çš„ç§å­ã€‚è¿™ç”¨äºè¿›ä¸€æ­¥éšæœºåŒ–å¯†é’¥ã€‚
+    GenerateRandomBytes(pKey, KEYSIZE);     // ä½¿ç”¨è¾…åŠ©å‡½æ•°ç”Ÿæˆå¯†é’¥
 
-    srand(time(NULL) ^ pKey[0]);            // Éú³É IV µÄÖÖ×Ó¡£Ê¹ÓÃÃÜÔ¿µÄµÚÒ»¸ö×Ö½ÚÒÔÔö¼ÓËæ»úĞÔ¡£
-    GenerateRandomBytes(pIv, IVSIZE);       // Ê¹ÓÃ¸¨Öúº¯ÊıÉú³É IV
+    srand(time(NULL) ^ pKey[0]);            // ç”Ÿæˆ IV çš„ç§å­ã€‚ä½¿ç”¨å¯†é’¥çš„ç¬¬ä¸€ä¸ªå­—èŠ‚ä»¥å¢åŠ éšæœºæ€§ã€‚
+    GenerateRandomBytes(pIv, IVSIZE);       // ä½¿ç”¨è¾…åŠ©å‡½æ•°ç”Ÿæˆ IV
 
-    // ½«ÃÜÔ¿ºÍ IV ´òÓ¡µ½¿ØÖÆÌ¨ÉÏ
+    // å°†å¯†é’¥å’Œ IV æ‰“å°åˆ°æ§åˆ¶å°ä¸Š
     PrintHexData("pKey", pKey, KEYSIZE);
     PrintHexData("pIv", pIv, IVSIZE);
 
 
-    // ¶¨ÒåÁ½¸ö±äÁ¿Êä³ö»º³åÇø¼°ÆäÏàÓ¦µÄ´óĞ¡£¬½«ÔÚ SimpleEncryption ÖĞÊ¹ÓÃ
+    // å®šä¹‰ä¸¤ä¸ªå˜é‡è¾“å‡ºç¼“å†²åŒºåŠå…¶ç›¸åº”çš„å¤§å°ï¼Œå°†åœ¨ SimpleEncryption ä¸­ä½¿ç”¨
     PVOID pCipherText = NULL;
     DWORD dwCipherSize = NULL;
 
-    // ¼ÓÃÜ
+    // åŠ å¯†
     if (!SimpleEncryption(Data, sizeof(Data), pKey, pIv, &pCipherText, &dwCipherSize)) {
         return -1;
     }
 
-    // ½«¼ÓÃÜºóµÄ»º³åÇø´òÓ¡ÎªÊ®Áù½øÖÆÊı×é
+    // å°†åŠ å¯†åçš„ç¼“å†²åŒºæ‰“å°ä¸ºåå…­è¿›åˆ¶æ•°ç»„
     PrintHexData("CipherText", pCipherText, dwCipherSize);
 
-    // Çå³ı
+    // æ¸…é™¤
     HeapFree(GetProcessHeap(), 0, pCipherText);
     system("PAUSE");
     return 0;
